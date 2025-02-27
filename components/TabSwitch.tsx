@@ -1,7 +1,7 @@
 "use client"
 
 import { cn } from "@/lib/utils"
-import { useTranslations } from "next-intl"
+import { useLocale, useTranslations } from "next-intl"
 import { useEffect, useRef, useState } from "react"
 
 export default function TabSwitch({
@@ -19,6 +19,7 @@ export default function TabSwitch({
     w: 0,
   })
   const tabRefs = useRef<(HTMLDivElement | null)[]>([])
+  const locale = useLocale()
 
   useEffect(() => {
     const currentTabElement = tabRefs.current[tabs.indexOf(currentTab)]
@@ -32,14 +33,14 @@ export default function TabSwitch({
         w: currentTabElement.offsetWidth,
       })
     }
-  }, [currentTab, tabs])
+  }, [currentTab, tabs, locale])
 
   return (
     <div className="z-50 flex flex-col items-start rounded-[50px]">
       <div className="relative flex items-center gap-1 rounded-[50px] bg-stone-100 p-[3px] dark:bg-stone-800">
         {indicator.w > 0 && (
           <div
-            className="absolute top-[3px] left-0 z-10 h-[35px] bg-white shadow-lg shadow-black/5 dark:bg-stone-700 dark:shadow-white/5"
+            className="absolute top-[3px] left-0 z-10 h-[35px] bg-white shadow-black/5 shadow-lg dark:bg-stone-700 dark:shadow-white/5"
             style={{
               borderRadius: 24,
               width: `${indicator.w}px`,
@@ -56,8 +57,8 @@ export default function TabSwitch({
             }}
             onClick={() => setCurrentTab(tab)}
             className={cn(
-              "relative cursor-pointer rounded-3xl px-2.5 py-[8px] text-[13px] font-[600]",
-              "transition-all duration-500 ease-in-out text-stone-400 dark:text-stone-500 hover:text-stone-950 hover:dark:text-stone-50",
+              "relative cursor-pointer rounded-3xl px-2.5 py-[8px] font-[600] text-[13px]",
+              "text-stone-400 transition-all duration-500 ease-in-out hover:text-stone-950 dark:text-stone-500 hover:dark:text-stone-50",
               {
                 "text-stone-950 dark:text-stone-50": currentTab === tab,
               },

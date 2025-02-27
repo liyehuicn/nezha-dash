@@ -15,7 +15,6 @@ import { Label } from "@/components/ui/label"
 import { Switch } from "@/components/ui/switch"
 import getEnv from "@/lib/env-entry"
 import { formatTime, nezhaFetcher } from "@/lib/utils"
-import { formatRelativeTime } from "@/lib/utils"
 import { useTranslations } from "next-intl"
 import * as React from "react"
 import { useCallback, useMemo } from "react"
@@ -48,8 +47,8 @@ export function NetworkChartClient({
     return (
       <>
         <div className="flex flex-col items-center justify-center">
-          <p className="text-sm font-medium opacity-40">{error.message}</p>
-          <p className="text-sm font-medium opacity-40">{t("chart_fetch_error_message")}</p>
+          <p className="font-medium text-sm opacity-40">{error.message}</p>
+          <p className="font-medium text-sm opacity-40">{t("chart_fetch_error_message")}</p>
         </div>
         <NetworkChartLoading />
       </>
@@ -124,12 +123,12 @@ export const NetworkChart = React.memo(function NetworkChart({
           key={key}
           data-active={activeChart === key}
           className={
-            "relative z-30 flex cursor-pointer grow basis-0 flex-col justify-center gap-1 border-b border-neutral-200 dark:border-neutral-800 px-6 py-4 text-left data-[active=true]:bg-muted/50 sm:border-l sm:border-t-0 sm:px-6"
+            "relative z-30 flex grow basis-0 cursor-pointer flex-col justify-center gap-1 border-neutral-200 border-b px-6 py-4 text-left data-[active=true]:bg-muted/50 sm:border-t-0 sm:border-l sm:px-6 dark:border-neutral-800"
           }
           onClick={() => handleButtonClick(key)}
         >
-          <span className="whitespace-nowrap text-xs text-muted-foreground">{key}</span>
-          <span className="text-md font-bold leading-none sm:text-lg">
+          <span className="whitespace-nowrap text-muted-foreground text-xs">{key}</span>
+          <span className="font-bold text-md leading-none sm:text-lg">
             {chartData[key][chartData[key].length - 1].avg_delay.toFixed(2)}ms
           </span>
         </button>
@@ -270,27 +269,55 @@ export const NetworkChart = React.memo(function NetworkChart({
           <CardDescription className="text-xs">
             {chartDataKey.length} {t("ServerMonitorCount")}
           </CardDescription>
-          <div className="flex items-center mt-0.5 space-x-2">
+          <div className="mt-0.5 flex items-center space-x-2">
             <Switch id="Peak" checked={isPeakEnabled} onCheckedChange={setIsPeakEnabled} />
             <Label className="text-xs" htmlFor="Peak">
               Peak cut
             </Label>
           </div>
         </div>
-        <div className="flex flex-wrap w-full">{chartButtons}</div>
+        <div className="flex w-full flex-wrap">{chartButtons}</div>
       </CardHeader>
-      <CardContent className="pr-2 pl-0 py-4 sm:pt-6 sm:pb-6 sm:pr-6 sm:pl-2">
+      <CardContent className="py-4 pr-2 pl-0 sm:pt-6 sm:pr-6 sm:pb-6 sm:pl-2">
         <ChartContainer config={chartConfig} className="aspect-auto h-[250px] w-full">
           <LineChart accessibilityLayer data={processedData} margin={{ left: 12, right: 12 }}>
             <CartesianGrid vertical={false} />
             <XAxis
               dataKey="created_at"
-              tickLine={false}
+              tickLine={true}
+              tickSize={3}
               axisLine={false}
               tickMargin={8}
-              minTickGap={32}
-              interval={"preserveStartEnd"}
-              tickFormatter={(value) => formatRelativeTime(value)}
+              minTickGap={80}
+              ticks={processedData
+                .filter((item, index, array) => {
+                  if (array.length < 6) {
+                    return index === 0 || index === array.length - 1
+                  }
+
+                  // 计算数据的总时间跨度（毫秒）
+                  const timeSpan = array[array.length - 1].created_at - array[0].created_at
+                  const hours = timeSpan / (1000 * 60 * 60)
+
+                  // 根据时间跨度调整显示间隔
+                  if (hours <= 12) {
+                    // 12小时内，每60分钟显示一个刻度
+                    return (
+                      index === 0 ||
+                      index === array.length - 1 ||
+                      new Date(item.created_at).getMinutes() % 60 === 0
+                    )
+                  }
+                  // 超过12小时，每2小时显示一个刻度
+                  const date = new Date(item.created_at)
+                  return date.getMinutes() === 0 && date.getHours() % 2 === 0
+                })
+                .map((item) => item.created_at)}
+              tickFormatter={(value) => {
+                const date = new Date(value)
+                const minutes = date.getMinutes()
+                return minutes === 0 ? `${date.getHours()}:00` : `${date.getHours()}:${minutes}`
+              }}
             />
             <YAxis
               tickLine={false}
