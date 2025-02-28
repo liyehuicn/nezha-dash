@@ -56,8 +56,8 @@ const getTagCounts = (servers: any[]) => {
 }
 
 const LoadingState = ({ t }: { t: any }) => (
-  <div className="flex flex-col items-center min-h-96 justify-center ">
-    <div className="font-semibold flex items-center gap-2 text-sm">
+  <div className="flex min-h-96 flex-col items-center justify-center ">
+    <div className="flex items-center gap-2 font-semibold text-sm">
       <Loader visible={true} />
       {t("connecting")}...
     </div>
@@ -66,8 +66,8 @@ const LoadingState = ({ t }: { t: any }) => (
 
 const ErrorState = ({ error, t }: { error: Error; t: any }) => (
   <div className="flex flex-col items-center justify-center">
-    <p className="text-sm font-medium opacity-40">{error.message}</p>
-    <p className="text-sm font-medium opacity-40">{t("error_message")}</p>
+    <p className="font-medium text-sm opacity-40">{error.message}</p>
+    <p className="font-medium text-sm opacity-40">{t("error_message")}</p>
   </div>
 )
 
@@ -80,7 +80,7 @@ const ServerList = ({
     return (
       <section
         ref={containerRef}
-        className="flex flex-col gap-2 overflow-x-scroll scrollbar-hidden"
+        className="scrollbar-hidden flex flex-col gap-2 overflow-x-scroll"
       >
         {servers.map((serverInfo) => (
           <ServerCardInline key={serverInfo.id} serverInfo={serverInfo} />
@@ -113,6 +113,11 @@ export default function ServerListClient() {
     const inlineState = localStorage.getItem("inline")
     if (inlineState !== null) {
       setInline(inlineState)
+    }
+
+    const showMapState = localStorage.getItem("showMap")
+    if (showMapState !== null) {
+      setShowMap(showMapState === "true")
     }
 
     const savedTag = sessionStorage.getItem("selectedTag") || defaultTag
@@ -166,14 +171,19 @@ export default function ServerListClient() {
 
   return (
     <>
-      <section className="flex items-center gap-2 w-full overflow-hidden">
+      <section className="flex w-full items-center gap-2 overflow-hidden">
         <button
           type="button"
-          onClick={() => setShowMap(!showMap)}
+          onClick={() => {
+            const newShowMap = !showMap
+            setShowMap(newShowMap)
+            localStorage.setItem("showMap", String(newShowMap))
+          }}
           className={cn(
-            "rounded-[50px] text-white cursor-pointer [text-shadow:_0_1px_0_rgb(0_0_0_/_20%)] bg-blue-600 p-[10px] transition-all shadow-[inset_0_1px_0_rgba(255,255,255,0.2)]",
+            "inset-shadow-2xs inset-shadow-white/20 flex cursor-pointer flex-col items-center gap-0 rounded-[50px] bg-blue-100 p-[10px] text-blue-600 transition-all dark:bg-blue-900 dark:text-blue-100 ",
             {
-              "shadow-[inset_0_1px_0_rgba(0,0,0,0.2)] bg-blue-500": showMap,
+              "inset-shadow-black/20 bg-blue-600 text-white dark:bg-blue-100 dark:text-blue-600":
+                showMap,
             },
           )}
         >
@@ -187,9 +197,10 @@ export default function ServerListClient() {
             localStorage.setItem("inline", newInline)
           }}
           className={cn(
-            "rounded-[50px] text-white cursor-pointer [text-shadow:_0_1px_0_rgb(0_0_0_/_20%)] bg-blue-600  p-[10px] transition-all shadow-[inset_0_1px_0_rgba(255,255,255,0.2)]",
+            "inset-shadow-2xs inset-shadow-white/20 flex cursor-pointer flex-col items-center gap-0 rounded-[50px] bg-blue-100 p-[10px] text-blue-600 transition-all dark:bg-blue-900 dark:text-blue-100 ",
             {
-              "shadow-[inset_0_1px_0_rgba(0,0,0,0.2)] bg-blue-500": inline === "1",
+              "inset-shadow-black/20 bg-blue-600 text-white dark:bg-blue-100 dark:text-blue-600":
+                inline === "1",
             },
           )}
         >

@@ -1,11 +1,12 @@
 "use client"
 
+import AnimateCountClient from "@/components/AnimatedCount"
 import { LanguageSwitcher } from "@/components/LanguageSwitcher"
 import { ModeToggle } from "@/components/ThemeSwitcher"
 import { Separator } from "@/components/ui/separator"
+import { Skeleton } from "@/components/ui/skeleton"
 
 import getEnv from "@/lib/env-entry"
-import NumberFlow, { NumberFlowGroup } from "@number-flow/react"
 import { DateTime } from "luxon"
 import { useTranslations } from "next-intl"
 import { useRouter } from "next/navigation"
@@ -30,7 +31,7 @@ const useCurrentTime = () => {
   })
 
   useEffect(() => {
-    const timer = setInterval(() => {
+    const intervalId = setInterval(() => {
       const now = DateTime.now().setLocale("en-US")
       setTime({
         hh: now.hour,
@@ -39,7 +40,7 @@ const useCurrentTime = () => {
       })
     }, 1000)
 
-    return () => clearInterval(timer)
+    return () => clearInterval(intervalId)
   }, [])
 
   return time
@@ -59,7 +60,7 @@ const Links = memo(function Links() {
           href={link.link}
           target="_blank"
           rel="noopener noreferrer"
-          className="flex items-center gap-1 text-sm font-medium opacity-50 transition-opacity hover:opacity-100"
+          className="flex items-center gap-1 font-medium text-sm opacity-50 transition-opacity hover:opacity-100"
         >
           {link.name}
         </a>
@@ -71,28 +72,30 @@ const Links = memo(function Links() {
 const Overview = memo(function Overview() {
   const t = useTranslations("Overview")
   const time = useCurrentTime()
+  const [mounted, setMounted] = useState(false)
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
 
   return (
     <section className={"mt-10 flex flex-col md:mt-16"}>
-      <p className="text-base font-semibold">{t("p_2277-2331_Overview")}</p>
-      <div className="flex items-center gap-1.5">
-        <p className="text-sm font-medium opacity-50">{t("p_2390-2457_wherethetimeis")}</p>
-        <NumberFlowGroup>
-          <div
-            style={{ fontVariantNumeric: "tabular-nums" }}
-            className="flex text-sm font-medium mt-0.5"
-          >
-            <NumberFlow trend={1} value={time.hh} format={{ minimumIntegerDigits: 2 }} />
-            <NumberFlow
-              prefix=":"
-              trend={1}
-              value={time.mm}
-              digits={{ 1: { max: 5 } }}
-              format={{ minimumIntegerDigits: 2 }}
-            />
-            <p className="mt-[0.5px]">:{time.ss.toString().padStart(2, "0")}</p>
+      <p className="font-semibold text-base">{t("p_2277-2331_Overview")}</p>
+      <div className="flex items-center gap-1">
+        <p className="font-medium text-sm opacity-50">{t("p_2390-2457_wherethetimeis")}</p>
+        {mounted ? (
+          <div className="flex items-center font-medium text-sm">
+            <AnimateCountClient count={time.hh} minDigits={2} />
+            <span className="mb-[1px] font-medium text-sm opacity-50">:</span>
+            <AnimateCountClient count={time.mm} minDigits={2} />
+            <span className="mb-[1px] font-medium text-sm opacity-50">:</span>
+            <span className="font-medium text-sm">
+              <AnimateCountClient count={time.ss} minDigits={2} />
+            </span>
           </div>
-        </NumberFlowGroup>
+        ) : (
+          <Skeleton className="h-[21px] w-16 animate-none rounded-[5px] bg-muted-foreground/10" />
+        )}
       </div>
     </section>
   )
@@ -116,7 +119,7 @@ function Header() {
       <section className="flex items-center justify-between">
         <section
           onClick={handleLogoClick}
-          className="flex cursor-pointer items-center text-base font-medium hover:opacity-50 transition-opacity duration-300"
+          className="flex cursor-pointer items-center font-medium text-base transition-opacity duration-300 hover:opacity-50"
         >
           <div className="mr-1 flex flex-row items-center justify-start">
             <img
@@ -124,19 +127,19 @@ function Header() {
               height={40}
               alt="apple-touch-icon"
               src={customLogo ? customLogo : "/apple-touch-icon.png"}
-              className="relative m-0! border-2 border-transparent h-6 w-6 object-cover object-top p-0! dark:hidden"
+              className="relative m-0! h-6 w-6 border-2 border-transparent object-cover object-top p-0! dark:hidden"
             />
             <img
               width={40}
               height={40}
               alt="apple-touch-icon"
               src={customLogo ? customLogo : "/apple-touch-icon-dark.png"}
-              className="relative m-0! border-2 border-transparent h-6 w-6 object-cover object-top p-0! hidden dark:block"
+              className="relative m-0! hidden h-6 w-6 border-2 border-transparent object-cover object-top p-0! dark:block"
             />
           </div>
           {customTitle ? customTitle : "NezhaDash"}
           <Separator orientation="vertical" className="mx-2 hidden h-4 w-[1px] md:block" />
-          <p className="hidden text-sm font-medium opacity-40 md:block">
+          <p className="hidden font-medium text-sm opacity-40 md:block">
             {customDescription ? customDescription : t("p_1079-1199_Simpleandbeautifuldashbo")}
           </p>
         </section>
@@ -148,7 +151,7 @@ function Header() {
           <ModeToggle />
         </section>
       </section>
-      <div className="w-full flex justify-end sm:hidden mt-1">
+      <div className="mt-1 flex w-full justify-end sm:hidden">
         <Links />
       </div>
       <Overview />
